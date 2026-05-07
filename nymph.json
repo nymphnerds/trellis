@@ -28,7 +28,25 @@
     "open": "scripts/trellis_open.sh",
     "logs": "scripts/trellis_logs.sh",
     "fetch_models": "scripts/trellis_fetch_models.sh",
-    "smoke_test": "scripts/trellis_smoke_test.sh"
+    "smoke_test": "scripts/trellis_smoke_test.sh",
+    "uninstall": "scripts/trellis_uninstall.sh"
+  },
+  "uninstall": {
+    "supports_purge": true,
+    "requires_confirmation": true,
+    "dry_run_arg": "--dry-run",
+    "confirm_arg": "--yes",
+    "purge_arg": "--purge",
+    "preserve_by_default": [
+      "outputs",
+      "logs",
+      "Hugging Face cache"
+    ],
+    "removes_by_default": [
+      "runtime source files",
+      ".venv",
+      ".cache/trellis-gguf-runtime"
+    ]
   },
   "dependencies": {
     "python": "3.10",
