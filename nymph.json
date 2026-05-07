@@ -1,0 +1,64 @@
+{
+  "manifest_version": 1,
+  "id": "trellis",
+  "name": "TRELLIS.2",
+  "short_name": "TR",
+  "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
+  "category": "3d",
+  "packaging": "repo",
+  "repo": {
+    "url": "https://github.com/nymphnerds/trellis.git",
+    "branch": "main"
+  },
+  "install": {
+    "path": "$HOME/TRELLIS.2",
+    "script": "scripts/install_trellis.sh"
+  },
+  "runtime": {
+    "host": "127.0.0.1",
+    "port": 8095,
+    "health_url": "http://127.0.0.1:8095/health",
+    "server_info_url": "http://127.0.0.1:8095/server_info"
+  },
+  "manager": {
+    "page": "custom",
+    "status": "scripts/trellis_status.sh",
+    "start": "scripts/trellis_start.sh",
+    "stop": "scripts/trellis_stop.sh",
+    "open": "scripts/trellis_open.sh",
+    "logs": "scripts/trellis_logs.sh",
+    "fetch_models": "scripts/trellis_fetch_models.sh",
+    "smoke_test": "scripts/trellis_smoke_test.sh"
+  },
+  "dependencies": {
+    "python": "3.10",
+    "cuda": "13.0",
+    "torch": "2.11.0+cu130",
+    "source": {
+      "repo": "https://github.com/microsoft/TRELLIS.2.git",
+      "commit": "5565d240c4a494caaf9ece7a554542b76ffa36d3"
+    },
+    "gguf_runtime": {
+      "ComfyUI-Trellis2-GGUF": "ed7245cba449c79e0a6703b7f09c0590328b4f77",
+      "ComfyUI-GGUF": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a"
+    },
+    "native": {
+      "utils3d": "9a4eb15e4021b67b12c460c7057d642626897ec8",
+      "CuMesh": "cf1a2f07304b5fe388ed86a16e4a0474599df914",
+      "FlexGEMM": "6dd94a859c26ee8246888502eada3dd8ad85532e",
+      "nvdiffrast": "253ac4fcea7de5f396371124af597e6cc957bfae"
+    },
+    "models": {
+      "gguf_repo": "Aero-Ex/Trellis2-GGUF",
+      "support_repo": "microsoft/TRELLIS.2-4B",
+      "default_quant": "Q5_K_M",
+      "valid_quants": ["Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0"],
+      "all_quant_pull": "TRELLIS_GGUF_QUANT=all"
+    }
+  },
+  "notes": [
+    "This module preserves the main-branch GGUF quantized-model pull behavior.",
+    "The manager page should be custom, not the generic fallback facts page.",
+    "Do not commit GGUF model weights, Hugging Face cache, .venv, or generated assets."
+  ]
+}
