@@ -180,7 +180,7 @@ PY
 }
 
 install_flash_attn() {
-  local flash_attn_jobs="${TRELLIS_FLASH_ATTN_MAX_JOBS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_MAX_JOBS:-}}"
+  local flash_attn_jobs="${TRELLIS_FLASH_ATTN_MAX_JOBS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_MAX_JOBS:-4}}"
   local flash_attn_nvcc_threads="${TRELLIS_FLASH_ATTN_NVCC_THREADS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_NVCC_THREADS:-}}"
   local -a flash_attn_env=()
 
@@ -206,16 +206,13 @@ PY
     "$(trellis_pip)" install ninja
   fi
 
-  if [[ -n "${flash_attn_jobs}" ]]; then
-    if [[ ! "${flash_attn_jobs}" =~ ^[0-9]+$ || "${flash_attn_jobs}" -lt 1 ]]; then
-      echo "Invalid TRELLIS_FLASH_ATTN_MAX_JOBS value: ${flash_attn_jobs}" >&2
-      exit 1
-    fi
-    echo "Limiting flash-attn build parallelism with MAX_JOBS=${flash_attn_jobs}."
-    flash_attn_env+=("MAX_JOBS=${flash_attn_jobs}")
-  else
-    echo "No MAX_JOBS cap set; letting flash-attn/ninja choose normal build parallelism."
+  if [[ ! "${flash_attn_jobs}" =~ ^[0-9]+$ || "${flash_attn_jobs}" -lt 1 ]]; then
+    echo "Invalid TRELLIS_FLASH_ATTN_MAX_JOBS value: ${flash_attn_jobs}" >&2
+    exit 1
   fi
+  echo "Limiting flash-attn build parallelism with MAX_JOBS=${flash_attn_jobs}."
+  echo "Set TRELLIS_FLASH_ATTN_MAX_JOBS to override this cap."
+  flash_attn_env+=("MAX_JOBS=${flash_attn_jobs}")
 
   if [[ -n "${flash_attn_nvcc_threads}" ]]; then
     if [[ ! "${flash_attn_nvcc_threads}" =~ ^[0-9]+$ || "${flash_attn_nvcc_threads}" -lt 1 ]]; then
