@@ -4,6 +4,78 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_trellis_common.sh"
 
+has_apt_candidate() {
+  local package_name="$1"
+  local candidate
+  candidate="$(apt-cache policy "${package_name}" 2>/dev/null | awk '/Candidate:/ {print $2; exit}')"
+  [[ -n "${candidate}" && "${candidate}" != "(none)" ]]
+}
+
+ensure_system_dependencies() {
+  local need_apt=0
+
+  for command_name in git curl cmake pkg-config; do
+    if ! command -v "${command_name}" >/dev/null 2>&1; then
+      need_apt=1
+    fi
+  done
+
+  if ! command -v python3.10 >/dev/null 2>&1 ||
+     ! python3.10 - <<'PY' >/dev/null 2>&1 ||
+import venv
+PY
+     { ! command -v dpkg >/dev/null 2>&1 || ! dpkg -s python3.10-dev >/dev/null 2>&1; }; then
+    need_apt=1
+  fi
+
+  if [[ "${need_apt}" -ne 1 ]]; then
+    return 0
+  fi
+
+  echo "Installing TRELLIS.2 system dependencies."
+
+  if ! command -v sudo >/dev/null 2>&1 ||
+     ! command -v apt-cache >/dev/null 2>&1; then
+    echo "Required system packages are missing and automatic apt installation is not available." >&2
+    echo "Install python3.10, python3.10-venv, python3.10-dev, git, curl, cmake, pkg-config, and build-essential, then retry." >&2
+    exit 1
+  fi
+
+  sudo apt update
+  sudo apt install -y \
+    ca-certificates \
+    cmake \
+    git \
+    wget \
+    curl \
+    unzip \
+    build-essential \
+    pkg-config \
+    software-properties-common \
+    python3 \
+    python3-venv \
+    python3-pip \
+    libegl1-mesa-dev \
+    libgl1 \
+    libglib2.0-0 \
+    ccache
+
+  if ! has_apt_candidate python3.10 || ! has_apt_candidate python3.10-venv || ! has_apt_candidate python3.10-dev; then
+    echo "Python 3.10 packages are not available in current apt sources. Adding deadsnakes PPA..."
+    sudo add-apt-repository -y ppa:deadsnakes/ppa
+    sudo apt update
+  fi
+
+  sudo apt install -y \
+    python3.10 \
+    python3.10-venv \
+    python3.10-dev
+
+  if apt-cache show python3.10-distutils >/dev/null 2>&1; then
+    sudo apt install -y python3.10-distutils
+  fi
+}
+
 ensure_module_submodules() {
   local eigen_dir="${MODULE_ROOT}/o-voxel/third_party/eigen"
 
@@ -107,18 +179,11 @@ print("TRELLIS.2 GGUF runtime imports available.")
 PY
 }
 
+ensure_system_dependencies
+
 if [[ ! -d "${CUDA_HOME:-}" ]]; then
   echo "CUDA 13.0 was not found at ${CUDA_HOME:-/usr/local/cuda-13.0}" >&2
-  exit 1
-fi
-
-if ! command -v python3.10 >/dev/null 2>&1; then
-  echo "python3.10 is required for TRELLIS.2 GGUF." >&2
-  exit 1
-fi
-
-if ! command -v git >/dev/null 2>&1; then
-  echo "git is required for TRELLIS.2 GGUF." >&2
+  echo "Install CUDA Toolkit 13.0 for WSL, then retry TRELLIS.2 installation." >&2
   exit 1
 fi
 
