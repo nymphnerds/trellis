@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -17,7 +17,7 @@
     "ref": "main"
   },
   "overview": {
-    "body": "TRELLIS.2 turns a source image into a high-fidelity textured 3D asset. It is Microsoft's open-source 4B image-to-3D model, using O-Voxel to handle complex shapes, sharp features, and PBR-style surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nFlashAttention install guide:\n- Install may compile flash-attn from source with the official pip command.\n- GPU chooses exactly one FLASH_ATTN_CUDA_ARCHS target for that build.\n- Auto-detect uses the first supported NVIDIA compute capability it sees.\n- If auto-detect cannot choose one target, install stops and asks for a manual GPU choice instead of compiling flash-attn's broad default arch list.\n- Max jobs sets MAX_JOBS, the number of parallel build jobs.\n- NVCC threads sets NVCC_THREADS inside each compiler job.\n- For 32GB RAM, use Max jobs 4 and NVCC threads 2. Drop NVCC threads to 1 if memory pressure is high.\n\nGPU arch quick guide:\n- SM80: RTX 30-series, RTX 40-series, A100, A30, A10/A16/A2, A40, RTX A-series, L4, L40/L40S, and RTX Ada workstation GPUs.\n- SM90: GH200, H200, H100, and H800.\n- SM100: GB200, B200, GB300, and B300 datacenter Blackwell GPUs.\n- SM110: Jetson Thor/T5000/T4000.\n- SM120: GeForce RTX 50-series and RTX PRO Blackwell workstation/server GPUs.",
+    "body": "TRELLIS.2 turns a source image into a high-fidelity textured 3D asset. It is Microsoft's open-source 4B image-to-3D model, using O-Voxel to handle complex shapes, sharp features, and PBR-style surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nModel fetch guide:\n- Install sets up the backend and Python runtime only. It does not download the large AI model files.\n- Fetch Models downloads the selected Aero-Ex/Trellis2-GGUF quant bundle, shared vision/encoder/decoder files from that GGUF repo, the required microsoft/TRELLIS.2-4B support checkpoint, and the rembg u2net background-removal model.\n- The selected quant is not one tiny file. It includes the GGUF pieces TRELLIS needs for shape/refiner generation, and the fetch script also allows matching texture GGUF files if the source repo publishes them.\n- Start with Q5_K_M for most GPUs. It is the intended balance of quality, download size, and VRAM.\n- Use Q4_K_M for the smallest first test or tighter VRAM. It is the quickest way to prove the module works.\n- Use Q6_K if Q5 works and you want a heavier quality-focused option.\n- Use Q8_0 only when you have plenty of VRAM and disk space. It is the largest option.\n- All quants is optional. It downloads every supported quant so Blender/addon switching can choose later; shared files download once, but the GGUF portion becomes much larger.\n- Model files are stored in $HOME/NymphsData/cache/huggingface and rembg u2net is stored in $HOME/NymphsData/models/rembg, not inside the disposable module repo.\n\nFlashAttention install guide:\n- Install may compile flash-attn from source with the official pip command.\n- GPU chooses exactly one FLASH_ATTN_CUDA_ARCHS target for that build.\n- Auto-detect uses the first supported NVIDIA compute capability it sees.\n- If auto-detect cannot choose one target, install stops and asks for a manual GPU choice instead of compiling flash-attn's broad default arch list.\n- Max jobs sets MAX_JOBS, the number of parallel build jobs.\n- NVCC threads sets NVCC_THREADS inside each compiler job.\n- For 32GB RAM, use Max jobs 4 and NVCC threads 2. Drop NVCC threads to 1 if memory pressure is high.\n\nGPU arch quick guide:\n- SM80: RTX 30-series, RTX 40-series, A100, A30, A10/A16/A2, A40, RTX A-series, L4, L40/L40S, and RTX Ada workstation GPUs.\n- SM90: GH200, H200, H100, and H800.\n- SM100: GB200, B200, GB300, and B300 datacenter Blackwell GPUs.\n- SM110: Jetson Thor/T5000/T4000.\n- SM120: GeForce RTX 50-series and RTX PRO Blackwell workstation/server GPUs.",
     "links": [
       {
         "label": "Official TRELLIS.2 repo",
@@ -26,6 +26,18 @@
       {
         "label": "Official TRELLIS.2 project page",
         "url": "https://microsoft.github.io/TRELLIS.2/"
+      },
+      {
+        "label": "GGUF models",
+        "url": "https://huggingface.co/Aero-Ex/Trellis2-GGUF"
+      },
+      {
+        "label": "Support checkpoint",
+        "url": "https://huggingface.co/microsoft/TRELLIS.2-4B"
+      },
+      {
+        "label": "rembg u2net",
+        "url": "https://github.com/danielgatis/rembg/releases/tag/v0.0.0"
       }
     ],
     "requirements": [
@@ -170,7 +182,7 @@
         "entrypoint": "fetch_models",
         "result": "show_logs",
         "visibility": "installed",
-        "description": "Install sets up the TRELLIS.2 GGUF backend only. Fetch Models downloads the actual model files.\nEvery fetch downloads the selected Aero-Ex/Trellis2-GGUF quant plus the required microsoft/TRELLIS.2-4B support checkpoint and the rembg u2net background-removal model.\nStart with Q5_K_M for most GPUs. Q4_K_M is smaller and lighter. Q6_K and Q8_0 are larger quality-focused options. Choose All quants only if Blender/addon switching needs every supported GGUF later.",
+        "description": "Install sets up the TRELLIS.2 GGUF backend only. Fetch Models downloads the actual model files.\nEvery fetch downloads shared GGUF support files, your selected quant bundle, the required microsoft/TRELLIS.2-4B support checkpoint, and rembg u2net.\nStart with Q5_K_M for most GPUs. Q4_K_M is the smallest first test. Q6_K and Q8_0 are larger quality-focused options. Choose All quants only if Blender/addon switching needs every supported GGUF later.",
         "links": [
           {
             "label": "GGUF models",
@@ -196,27 +208,27 @@
               {
                 "label": "All quants",
                 "value": "all",
-                "description": "Download every supported GGUF so Blender can switch later"
+                "description": "Optional large download: every supported GGUF so Blender can switch later"
               },
               {
                 "label": "Q4_K_M",
                 "value": "Q4_K_M",
-                "description": "Smallest option, lower VRAM, fastest first test"
+                "description": "Smallest download and lowest VRAM; best first proof test"
               },
               {
                 "label": "Q5_K_M",
                 "value": "Q5_K_M",
-                "description": "Recommended balance for most users"
+                "description": "Recommended balance of quality, download size, and VRAM"
               },
               {
                 "label": "Q6_K",
                 "value": "Q6_K",
-                "description": "Higher quality, larger download and more VRAM"
+                "description": "Heavier quality-focused option after Q5 works"
               },
               {
                 "label": "Q8_0",
                 "value": "Q8_0",
-                "description": "Largest local GGUF option, best fidelity if the GPU has room"
+                "description": "Largest local GGUF option; use only with plenty of VRAM and disk"
               }
             ]
           },

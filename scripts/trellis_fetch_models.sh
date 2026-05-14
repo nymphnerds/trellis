@@ -40,16 +40,17 @@ Usage:
   trellis_fetch_models.sh --quant Q5_K_M
   trellis_fetch_models.sh --quant all
 
-Downloads the selected TRELLIS.2 GGUF quant files from Aero-Ex/Trellis2-GGUF,
-the required support checkpoint from microsoft/TRELLIS.2-4B, and the rembg
-u2net background-removal model. Use --quant all only if Blender/addon workflows
-need to switch between every supported quant later.
+Downloads the selected TRELLIS.2 GGUF quant bundle from Aero-Ex/Trellis2-GGUF,
+the shared GGUF support files, the required support checkpoint from
+microsoft/TRELLIS.2-4B, and the rembg u2net background-removal model.
+Use --quant all only if Blender/addon workflows need to switch between every
+supported quant later.
 
 Supported TRELLIS.2 GGUF quants:
-  Q4_K_M  - smallest download, lowest VRAM, fastest first test
-  Q5_K_M  - recommended balance for most users
-  Q6_K    - higher quality, larger download and more VRAM
-  Q8_0    - largest local GGUF option, best fidelity if the GPU has room
+  Q4_K_M  - smallest download and lowest VRAM; best first proof test
+  Q5_K_M  - recommended balance of quality, download size, and VRAM
+  Q6_K    - heavier quality-focused option after Q5 works
+  Q8_0    - largest option; use only with plenty of VRAM and disk
 EOF
       exit 0
       ;;
@@ -144,7 +145,7 @@ echo "trellis_gguf_quant=${TRELLIS_GGUF_QUANT}"
 echo "download_all_quants=${download_all_quants}"
 echo "hf_cache_dir=${NYMPHS3D_HF_CACHE_DIR}"
 echo "u2net_dir=${U2NET_HOME}"
-echo "model_fetch_plan=selected TRELLIS GGUF quant, required support checkpoint, and rembg u2net background-removal model"
+echo "model_fetch_plan=shared GGUF support files, selected TRELLIS GGUF quant bundle, required support checkpoint, and rembg u2net background-removal model"
 
 if [[ "${download_all_quants}" == "true" ]]; then
   export TRELLIS_FETCH_ALL_QUANTS=1
@@ -218,7 +219,7 @@ print(
     flush=True,
 )
 print(
-    "MODEL FETCH NOTE: TRELLIS.2 GGUF files are large because each quant includes shape, refiner, texture, vision, encoder, and decoder components.",
+    "MODEL FETCH NOTE: TRELLIS.2 downloads are large because the GGUF repo includes shared vision/encoder/decoder files plus the selected shape/refiner quant bundle; matching texture GGUF files are included if the source repo publishes them.",
     flush=True,
 )
 thread = threading.Thread(target=heartbeat, args=(start_size,), daemon=True)
