@@ -190,8 +190,11 @@ map_flash_attn_cuda_arch() {
     9)
       echo "90"
       ;;
-    10|11)
+    10)
       echo "100"
+      ;;
+    11)
+      echo "110"
       ;;
     12)
       echo "120"
