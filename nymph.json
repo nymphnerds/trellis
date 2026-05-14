@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -16,6 +16,14 @@
     "repo": "https://github.com/nymphnerds/trellis.git",
     "ref": "main"
   },
+  "overview": {
+    "body": "TRELLIS.2 installs a local GGUF 3D generation backend. Install may compile flash-attn from source with the official pip command. The FlashAttention max jobs option sets TRELLIS_FLASH_ATTN_MAX_JOBS, which becomes MAX_JOBS for that flash-attn build only. It does not change model download size, runtime quality, or GPU settings. Lower values use less RAM and take longer. MAX_JOBS=4 is the recommended default for 32GB RAM.",
+    "requirements": [
+      "Python 3.10 in the managed NymphsCore WSL distro",
+      "CUDA-capable NVIDIA GPU",
+      "Enough free RAM for flash-attn native compilation"
+    ]
+  },
   "install": {
     "root": "$HOME/TRELLIS.2",
     "entrypoint": "scripts/install_trellis.sh",
@@ -27,24 +35,24 @@
       {
         "name": "flash_attn_jobs",
         "type": "select",
-        "label": "Build speed",
+        "label": "FlashAttention max jobs",
         "env": "TRELLIS_FLASH_ATTN_MAX_JOBS",
         "default": "4",
         "options": [
           {
-            "label": "Safe",
+            "label": "MAX_JOBS=2",
             "value": "2",
-            "description": "Lower memory use, slower flash-attn compile"
+            "description": "Lowest RAM pressure for the flash-attn source build"
           },
           {
-            "label": "Balanced",
+            "label": "MAX_JOBS=4",
             "value": "4",
-            "description": "Recommended for 32GB RAM"
+            "description": "Recommended flash-attn build cap for 32GB RAM"
           },
           {
-            "label": "Fast",
+            "label": "MAX_JOBS=8",
             "value": "8",
-            "description": "More CPU and RAM use during compile"
+            "description": "More CPU and RAM use during the flash-attn source build"
           }
         ]
       }
