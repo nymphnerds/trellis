@@ -50,7 +50,12 @@ def resolve_gguf_quant(raw: str | None = None) -> str:
 
 
 def _hf_cache_repo_dir(repo_id: str) -> Path:
-    return Path.home() / ".cache" / "huggingface" / "hub" / f"models--{repo_id.replace('/', '--')}"
+    cache_root = (
+        os.environ.get("HF_HUB_CACHE")
+        or os.environ.get("NYMPHS3D_HF_CACHE_DIR")
+        or str(Path.home() / ".cache" / "huggingface" / "hub")
+    )
+    return Path(cache_root).expanduser() / f"models--{repo_id.replace('/', '--')}"
 
 
 def _candidate_gguf_roots() -> list[Path]:
@@ -149,7 +154,15 @@ def _snapshot_download(repo_id: str, *, local_files_only: bool, quant: str | Non
 
 
 def _find_hf_snapshot_file(repo_dir_name: str, relative_path: str) -> str | None:
-    cache_root = Path.home() / ".cache" / "huggingface" / "hub" / repo_dir_name / "snapshots"
+    cache_root = (
+        Path(
+            os.environ.get("HF_HUB_CACHE")
+            or os.environ.get("NYMPHS3D_HF_CACHE_DIR")
+            or str(Path.home() / ".cache" / "huggingface" / "hub")
+        ).expanduser()
+        / repo_dir_name
+        / "snapshots"
+    )
     if not cache_root.exists():
         return None
     for snapshot in sorted(cache_root.iterdir(), reverse=True):

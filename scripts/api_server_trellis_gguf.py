@@ -685,6 +685,9 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(content_length).decode("utf-8"))
 
     def do_GET(self) -> None:
+        if self.path == "/health":
+            self.send_json(200, {"status": "ok", "backend": "TRELLIS.2-GGUF"})
+            return
         if self.path == "/server_info":
             self.send_json(200, server_info())
             return

@@ -3,6 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
+  "version": "0.1.1",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -10,9 +11,18 @@
     "url": "https://github.com/nymphnerds/trellis.git",
     "branch": "main"
   },
+  "source": {
+    "type": "repo",
+    "repo": "https://github.com/nymphnerds/trellis.git",
+    "ref": "main"
+  },
   "install": {
-    "path": "$HOME/TRELLIS.2",
-    "script": "scripts/install_trellis.sh"
+    "root": "$HOME/TRELLIS.2",
+    "entrypoint": "scripts/install_trellis.sh",
+    "version_marker": "$HOME/TRELLIS.2/.nymph-module-version",
+    "installed_markers": [
+      "$HOME/TRELLIS.2/.nymph-module-version"
+    ]
   },
   "runtime": {
     "host": "127.0.0.1",
@@ -20,8 +30,19 @@
     "health_url": "http://127.0.0.1:8095/health",
     "server_info_url": "http://127.0.0.1:8095/server_info"
   },
-  "manager": {
-    "page": "custom",
+  "artifacts": {
+    "models_root": "$HOME/NymphsData/models",
+    "cache_root": "$HOME/NymphsData/cache",
+    "outputs_root": "$HOME/NymphsData/outputs/trellis",
+    "logs_root": "$HOME/NymphsData/logs/trellis",
+    "config_root": "$HOME/NymphsData/config/trellis",
+    "huggingface_cache": "$HOME/NymphsData/cache/huggingface",
+    "rembg_model_root": "$HOME/NymphsData/models/rembg",
+    "legacy_outputs_root": "$HOME/TRELLIS.2/outputs",
+    "legacy_logs_root": "$HOME/TRELLIS.2/logs"
+  },
+  "entrypoints": {
+    "install": "scripts/install_trellis.sh",
     "status": "scripts/trellis_status.sh",
     "start": "scripts/trellis_start.sh",
     "stop": "scripts/trellis_stop.sh",
@@ -30,6 +51,107 @@
     "fetch_models": "scripts/trellis_fetch_models.sh",
     "smoke_test": "scripts/trellis_smoke_test.sh",
     "uninstall": "scripts/trellis_uninstall.sh"
+  },
+  "ui": {
+    "sort_order": 40,
+    "manager_action_groups": [
+      {
+        "id": "model_fetch",
+        "title": "Model Fetch",
+        "layout": "compact",
+        "entrypoint": "fetch_models",
+        "result": "show_logs",
+        "visibility": "installed",
+        "description": "Install sets up the TRELLIS.2 GGUF backend only. Fetch Models downloads the actual model files.\nEvery fetch downloads the selected Aero-Ex/Trellis2-GGUF quant plus the required microsoft/TRELLIS.2-4B support checkpoint and the rembg u2net background-removal model.\nStart with Q5_K_M for most GPUs. Q4_K_M is smaller and lighter. Q6_K and Q8_0 are larger quality-focused options. Choose All quants only if Blender/addon switching needs every supported GGUF later.",
+        "links": [
+          {
+            "label": "GGUF models",
+            "url": "https://huggingface.co/Aero-Ex/Trellis2-GGUF"
+          },
+          {
+            "label": "Support checkpoint",
+            "url": "https://huggingface.co/microsoft/TRELLIS.2-4B"
+          },
+          {
+            "label": "rembg u2net",
+            "url": "https://github.com/danielgatis/rembg/releases/tag/v0.0.0"
+          }
+        ],
+        "fields": [
+          {
+            "name": "gguf_quant",
+            "type": "select",
+            "label": "Download",
+            "arg": "--quant",
+            "default": "Q5_K_M",
+            "options": [
+              {
+                "label": "All quants",
+                "value": "all",
+                "description": "Download every supported GGUF so Blender can switch later"
+              },
+              {
+                "label": "Q4_K_M",
+                "value": "Q4_K_M",
+                "description": "Smallest option, lower VRAM, fastest first test"
+              },
+              {
+                "label": "Q5_K_M",
+                "value": "Q5_K_M",
+                "description": "Recommended balance for most users"
+              },
+              {
+                "label": "Q6_K",
+                "value": "Q6_K",
+                "description": "Higher quality, larger download and more VRAM"
+              },
+              {
+                "label": "Q8_0",
+                "value": "Q8_0",
+                "description": "Largest local GGUF option, best fidelity if the GPU has room"
+              }
+            ]
+          },
+          {
+            "name": "hf_token",
+            "type": "secret",
+            "label": "Hugging Face token",
+            "secret_id": "huggingface.token",
+            "env": "NYMPHS3D_HF_TOKEN",
+            "optional": true
+          }
+        ],
+        "submit": {
+          "label": "Fetch Models"
+        }
+      }
+    ],
+    "manager_actions": [
+      {
+        "id": "smoke_test",
+        "label": "Smoke Test",
+        "entrypoint": "smoke_test",
+        "result": "show_output"
+      },
+      {
+        "id": "start",
+        "label": "Start",
+        "entrypoint": "start",
+        "result": "show_output"
+      },
+      {
+        "id": "stop",
+        "label": "Stop",
+        "entrypoint": "stop",
+        "result": "show_output"
+      },
+      {
+        "id": "logs",
+        "label": "Logs",
+        "entrypoint": "logs",
+        "result": "show_output"
+      }
+    ]
   },
   "uninstall": {
     "supports_purge": true,
@@ -40,7 +162,9 @@
     "preserve_by_default": [
       "outputs",
       "logs",
-      "Hugging Face cache"
+      "config",
+      "Hugging Face cache",
+      "rembg u2net model"
     ],
     "removes_by_default": [
       "runtime source files",
@@ -69,14 +193,15 @@
     "models": {
       "gguf_repo": "Aero-Ex/Trellis2-GGUF",
       "support_repo": "microsoft/TRELLIS.2-4B",
+      "rembg_u2net": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx",
       "default_quant": "Q5_K_M",
       "valid_quants": ["Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0"],
-      "all_quant_pull": "TRELLIS_GGUF_QUANT=all"
+      "all_quant_pull": "scripts/trellis_fetch_models.sh --quant all"
     }
   },
   "notes": [
     "This module preserves the main-branch GGUF quantized-model pull behavior.",
-    "The manager page should be custom, not the generic fallback facts page.",
-    "Do not commit GGUF model weights, Hugging Face cache, .venv, or generated assets."
+    "Model fetch uses native manager_action_groups and installed module-owned scripts.",
+    "Do not commit GGUF model weights, Hugging Face cache, .venv, logs, outputs, or generated assets."
   ]
 }

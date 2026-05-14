@@ -19,6 +19,7 @@ if [[ ! -f "${TRELLIS_INSTALL_ROOT}/scripts/api_server_trellis_gguf.py" ]]; then
   exit 1
 fi
 
+trellis_ensure_data_dirs
 log_file="${TRELLIS_LOG_DIR}/trellis-server.log"
 echo "Starting TRELLIS.2 at ${TRELLIS_SERVER_URL}"
 (

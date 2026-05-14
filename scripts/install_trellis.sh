@@ -4,6 +4,25 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_trellis_common.sh"
 
+ensure_module_submodules() {
+  local eigen_dir="${MODULE_ROOT}/o-voxel/third_party/eigen"
+
+  if [[ -f "${eigen_dir}/Eigen/Core" ]]; then
+    return 0
+  fi
+
+  if [[ -d "${MODULE_ROOT}/.git" ]]; then
+    echo "Initializing TRELLIS module submodules required for native builds"
+    git -C "${MODULE_ROOT}" submodule update --init --recursive o-voxel/third_party/eigen
+  fi
+
+  if [[ ! -f "${eigen_dir}/Eigen/Core" ]]; then
+    echo "Expected Eigen submodule is missing from ${eigen_dir}." >&2
+    echo "Run git submodule update --init --recursive o-voxel/third_party/eigen in the module repo, then retry." >&2
+    exit 1
+  fi
+}
+
 sync_module_source() {
   if [[ "$(cd "${MODULE_ROOT}" && pwd)" == "$(mkdir -p "${TRELLIS_INSTALL_ROOT}" && cd "${TRELLIS_INSTALL_ROOT}" && pwd)" ]]; then
     return 0
@@ -15,6 +34,7 @@ sync_module_source() {
     --exclude='.git' \
     --exclude='.venv' \
     --exclude='.cache' \
+    --exclude='.nymph-module-version' \
     --exclude='logs' \
     --exclude='outputs' \
     -cf - -C "${MODULE_ROOT}" . | tar -xf - -C "${TRELLIS_INSTALL_ROOT}"
@@ -102,6 +122,9 @@ if ! command -v git >/dev/null 2>&1; then
   exit 1
 fi
 
+rm -f "${TRELLIS_INSTALL_ROOT}/.nymph-module-version"
+
+ensure_module_submodules
 sync_module_source
 cd "${TRELLIS_INSTALL_ROOT}"
 
@@ -182,4 +205,16 @@ install_trellis_gguf_runtime
 
 "$(trellis_python)" scripts/api_server_trellis_gguf.py --help >/dev/null
 
+module_version="$(python3 - "${MODULE_ROOT}/nymph.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    manifest = json.load(handle)
+
+print(str(manifest.get("version", "unknown")).strip() or "unknown")
+PY
+)"
+printf '%s\n' "${module_version}" > "${TRELLIS_INSTALL_ROOT}/.nymph-module-version"
+echo "installed_module_version=${module_version}"
 echo "TRELLIS.2 GGUF install complete."

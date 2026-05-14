@@ -8,9 +8,12 @@ It combines:
 - the NymphsCore local HTTP adapter
 - GGUF model loading through `ComfyUI-Trellis2-GGUF`
 - shape and textured asset generation
-- manager scripts for install, status, launch, logs, model fetch, and smoke testing
+- module-owned manager scripts for install, status, launch, logs, model fetch,
+  smoke testing, and uninstall
 
-This repo is a module-shaped copy of the working manager install path. The manager page should remain custom; the manifest and scripts are the install/discovery contract.
+This repo follows the NymphsCore module-owned backend pattern. The Manager stays
+generic: it renders the native manifest-declared controls and runs the installed
+module scripts.
 
 ## Runtime Layout
 
@@ -19,9 +22,12 @@ Expected in-distro layout:
 - module repo: `~/TRELLIS.2`
 - runtime venv: `~/TRELLIS.2/.venv`
 - adapter scripts: `~/TRELLIS.2/scripts/`
-- logs: `~/TRELLIS.2/logs`
 - runtime helper cache: `~/TRELLIS.2/.cache/trellis-gguf-runtime`
-- Hugging Face cache: `~/.cache/huggingface/hub`
+- logs: `~/NymphsData/logs/trellis`
+- outputs: `~/NymphsData/outputs/trellis`
+- config/preset: `~/NymphsData/config/trellis/model-preset.env`
+- Hugging Face cache: `~/NymphsData/cache/huggingface`
+- rembg u2net model: `~/NymphsData/models/rembg/u2net.onnx`
 
 ## Manager Contract
 
@@ -38,6 +44,7 @@ scripts/trellis_open.sh
 scripts/trellis_logs.sh
 scripts/trellis_fetch_models.sh
 scripts/trellis_smoke_test.sh
+scripts/trellis_uninstall.sh
 ```
 
 Default local URL:
@@ -72,7 +79,7 @@ Q5_K_M
 To pull every supported quant:
 
 ```bash
-TRELLIS_GGUF_QUANT=all scripts/trellis_fetch_models.sh
+scripts/trellis_fetch_models.sh --quant all
 ```
 
 Support checkpoints are pulled from:
@@ -80,6 +87,9 @@ Support checkpoints are pulled from:
 ```text
 microsoft/TRELLIS.2-4B
 ```
+
+`Fetch Models` also downloads the `rembg` u2net background-removal model from
+the upstream release artifact used by the previous main-branch runtime flow.
 
 ## Important Dependency Pins
 
@@ -105,6 +115,7 @@ This repo should stay clean:
 - do not commit GGUF model files
 - do not commit generated GLB/PLY/OBJ assets
 - do not commit runtime logs
+- keep reusable models, logs, outputs, and config under `~/NymphsData`
 
 ## Upstream
 
