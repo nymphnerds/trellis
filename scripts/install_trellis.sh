@@ -236,6 +236,8 @@ normalize_flash_attn_cuda_archs() {
   raw="$(tr ', ' ';;' <<< "${raw}")"
   while IFS= read -r arch; do
     arch="$(tr -d '[:space:]' <<< "${arch}")"
+    arch="${arch,,}"
+    arch="${arch#sm}"
     [[ -z "${arch}" ]] && continue
 
     case "${arch}" in
@@ -243,7 +245,7 @@ normalize_flash_attn_cuda_archs() {
         ;;
       *)
         echo "Invalid TRELLIS_FLASH_ATTN_CUDA_ARCHS value: ${arch}" >&2
-        echo "Use auto or one of: 80, 90, 100, 110, 120." >&2
+        echo "Use auto or one of: sm80, sm90, sm100, sm110, sm120." >&2
         return 1
         ;;
     esac

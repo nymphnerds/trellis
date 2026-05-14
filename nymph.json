@@ -57,27 +57,27 @@
           },
           {
             "label": "SM80 / RTX 30+40",
-            "value": "80",
+            "value": "sm80",
             "description": "8.x GPUs: RTX 30/40, A100/A30/A10/A40, L4/L40, RTX A/Ada"
           },
           {
             "label": "SM90 / H100/H200",
-            "value": "90",
+            "value": "sm90",
             "description": "Hopper GPUs: GH200, H200, H100, H800"
           },
           {
             "label": "SM100 / B200",
-            "value": "100",
+            "value": "sm100",
             "description": "Datacenter Blackwell: GB200, B200, GB300, B300"
           },
           {
             "label": "SM110 / Jetson Thor",
-            "value": "110",
+            "value": "sm110",
             "description": "Jetson Thor targets: T5000 and T4000"
           },
           {
             "label": "SM120 / RTX 50",
-            "value": "120",
+            "value": "sm120",
             "description": "RTX 50-series and RTX PRO Blackwell workstation/server GPUs"
           }
         ]
