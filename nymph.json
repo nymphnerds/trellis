@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -17,7 +17,7 @@
     "ref": "main"
   },
   "overview": {
-    "body": "TRELLIS.2 is Microsoft's open-source 4B image-to-3D model for generating high-fidelity PBR textured 3D assets from images. It uses an O-Voxel representation to handle complex shapes, sharp features, and rich surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nFlashAttention install guide:\nInstall may compile flash-attn from source with the official pip command. GPU sets TRELLIS_FLASH_ATTN_CUDA_ARCHS, which becomes FLASH_ATTN_CUDA_ARCHS for that flash-attn build only. Auto-detect reads the NVIDIA compute capability and narrows the build when possible; manual values are useful if auto-detect is wrong or unavailable. Max jobs sets MAX_JOBS, while NVCC threads sets NVCC_THREADS inside each compiler job. These options do not change model download size, runtime quality, or normal runtime GPU settings. For 32GB RAM, use Max jobs 4 and NVCC threads 1 unless you want a more aggressive build. Hugging Face token entry appears during Model Fetch after install, because model downloads use the token and FlashAttention install does not.",
+    "body": "TRELLIS.2 is Microsoft's open-source 4B image-to-3D model for generating high-fidelity PBR textured 3D assets from images. It uses an O-Voxel representation to handle complex shapes, sharp features, and rich surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nFlashAttention install guide:\nInstall may compile flash-attn from source with the official pip command. GPU sets TRELLIS_FLASH_ATTN_CUDA_ARCHS, which becomes FLASH_ATTN_CUDA_ARCHS for that flash-attn build only. Auto-detect reads the NVIDIA compute capability and narrows the build when possible; manual values are useful if auto-detect is wrong or unavailable.\n\nGPU arch quick guide:\nSM80 is Ampere, including RTX 30-series and A100. SM90 is Hopper, including H100 and H800. SM100 is Blackwell, including RTX 50-series and B-series datacenter GPUs. SM110 and SM120 are newer CUDA targets; use them only if you know your toolkit and GPU need them. Max jobs sets MAX_JOBS, while NVCC threads sets NVCC_THREADS inside each compiler job. These options do not change model download size, runtime quality, or normal runtime GPU settings. For 32GB RAM, use Max jobs 4 and NVCC threads 2; drop NVCC threads to 1 if memory pressure is high. Hugging Face token entry appears during Model Fetch after install, because model downloads use the token and FlashAttention install does not.",
     "links": [
       {
         "label": "Official TRELLIS.2 repo",
@@ -56,27 +56,27 @@
             "description": "Read the NVIDIA compute capability and select the flash-attn target arch"
           },
           {
-            "label": "SM80",
+            "label": "SM80 / Ampere",
             "value": "80",
-            "description": "Ampere-class flash-attn target, such as A100 or RTX 30-series"
+            "description": "Ampere GPUs, including RTX 30-series and A100"
           },
           {
-            "label": "SM90",
+            "label": "SM90 / Hopper",
             "value": "90",
-            "description": "Hopper-class flash-attn target, such as H100 or H800"
+            "description": "Hopper GPUs, including H100 and H800"
           },
           {
-            "label": "SM100",
+            "label": "SM100 / Blackwell",
             "value": "100",
-            "description": "Blackwell-class flash-attn target"
+            "description": "Blackwell GPUs, including RTX 50-series and B-series datacenter GPUs"
           },
           {
-            "label": "SM110",
+            "label": "SM110 / Thor",
             "value": "110",
             "description": "Thor-class flash-attn target when supported by the CUDA toolkit"
           },
           {
-            "label": "SM120",
+            "label": "SM120 / Newer Blackwell",
             "value": "120",
             "description": "Newer Blackwell-class flash-attn target when supported by the CUDA toolkit"
           }
@@ -111,7 +111,7 @@
         "type": "select",
         "label": "NVCC threads",
         "env": "TRELLIS_FLASH_ATTN_NVCC_THREADS",
-        "default": "1",
+        "default": "2",
         "options": [
           {
             "label": "NVCC_THREADS=1",
