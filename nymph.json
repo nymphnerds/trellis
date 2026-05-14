@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -17,7 +17,7 @@
     "ref": "main"
   },
   "overview": {
-    "body": "TRELLIS.2 is Microsoft's open-source 4B image-to-3D model for generating high-fidelity PBR textured 3D assets from images. It uses an O-Voxel representation to handle complex shapes, sharp features, and rich surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nFlashAttention install guide:\nInstall may compile flash-attn from source with the official pip command. GPU sets TRELLIS_FLASH_ATTN_CUDA_ARCHS, which becomes FLASH_ATTN_CUDA_ARCHS for that flash-attn build only. Auto-detect reads the NVIDIA compute capability and narrows the build when possible; manual values are useful if auto-detect is wrong or unavailable.\n\nGPU arch quick guide:\nSM80 target: RTX 30-series, RTX 40-series, A100, A30, A10/A16/A2, A40, RTX A-series, L4, L40/L40S, and RTX Ada workstation GPUs. SM90 target: GH200, H200, H100, and H800. SM100 target: GB200, B200, GB300, and B300 datacenter Blackwell GPUs. SM110 target: Jetson Thor/T5000/T4000. SM120 target: GeForce RTX 50-series and RTX PRO Blackwell workstation/server GPUs. Max jobs sets MAX_JOBS, while NVCC threads sets NVCC_THREADS inside each compiler job. These options do not change model download size, runtime quality, or normal runtime GPU settings. For 32GB RAM, use Max jobs 4 and NVCC threads 2; drop NVCC threads to 1 if memory pressure is high. Hugging Face token entry appears during Model Fetch after install, because model downloads use the token and FlashAttention install does not.",
+    "body": "TRELLIS.2 is Microsoft's open-source 4B image-to-3D model for generating high-fidelity PBR textured 3D assets from images. It uses an O-Voxel representation to handle complex shapes, sharp features, and rich surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nFlashAttention install guide:\nInstall may compile flash-attn from source with the official pip command. GPU sets TRELLIS_FLASH_ATTN_CUDA_ARCHS, which becomes FLASH_ATTN_CUDA_ARCHS for that flash-attn build only. TRELLIS passes exactly one target arch to flash-attn. Auto-detect uses the first supported NVIDIA compute capability it sees; if auto-detect cannot choose one target, install stops and asks you to pick GPU manually instead of letting flash-attn compile its broad default arch list.\n\nGPU arch quick guide:\nSM80 target: RTX 30-series, RTX 40-series, A100, A30, A10/A16/A2, A40, RTX A-series, L4, L40/L40S, and RTX Ada workstation GPUs. SM90 target: GH200, H200, H100, and H800. SM100 target: GB200, B200, GB300, and B300 datacenter Blackwell GPUs. SM110 target: Jetson Thor/T5000/T4000. SM120 target: GeForce RTX 50-series and RTX PRO Blackwell workstation/server GPUs. Max jobs sets MAX_JOBS, while NVCC threads sets NVCC_THREADS inside each compiler job. These options do not change model download size, runtime quality, or normal runtime GPU settings. For 32GB RAM, use Max jobs 4 and NVCC threads 2; drop NVCC threads to 1 if memory pressure is high. Hugging Face token entry appears during Model Fetch after install, because model downloads use the token and FlashAttention install does not.",
     "links": [
       {
         "label": "Official TRELLIS.2 repo",

@@ -206,7 +206,6 @@ resolve_flash_attn_cuda_archs() {
   local detected_caps=""
   local compute_cap=""
   local arch=""
-  local archs=""
 
   if ! command -v nvidia-smi >/dev/null 2>&1; then
     return 0
@@ -224,26 +223,15 @@ resolve_flash_attn_cuda_archs() {
       continue
     fi
 
-    case ";${archs};" in
-      *";${arch};"*)
-        ;;
-      *)
-        if [[ -z "${archs}" ]]; then
-          archs="${arch}"
-        else
-          archs="${archs};${arch}"
-        fi
-        ;;
-    esac
+    echo "${arch}"
+    return 0
   done <<< "${detected_caps}"
-
-  echo "${archs}"
 }
 
 normalize_flash_attn_cuda_archs() {
   local raw="$1"
   local arch=""
-  local archs=""
+  local selected_arch=""
 
   raw="$(tr ', ' ';;' <<< "${raw}")"
   while IFS= read -r arch; do
@@ -255,25 +243,21 @@ normalize_flash_attn_cuda_archs() {
         ;;
       *)
         echo "Invalid TRELLIS_FLASH_ATTN_CUDA_ARCHS value: ${arch}" >&2
-        echo "Use auto or one of: 80, 90, 100, 110, 120. Separate multiple values with semicolons." >&2
+        echo "Use auto or one of: 80, 90, 100, 110, 120." >&2
         return 1
         ;;
     esac
 
-    case ";${archs};" in
-      *";${arch};"*)
-        ;;
-      *)
-        if [[ -z "${archs}" ]]; then
-          archs="${arch}"
-        else
-          archs="${archs};${arch}"
-        fi
-        ;;
-    esac
+    if [[ -n "${selected_arch}" && "${selected_arch}" != "${arch}" ]]; then
+      echo "TRELLIS_FLASH_ATTN_CUDA_ARCHS accepts one target arch for this install, not '${raw}'." >&2
+      echo "Choose one GPU target in the Manager dropdown so flash-attn does not compile multiple arch families." >&2
+      return 1
+    fi
+
+    selected_arch="${arch}"
   done < <(tr ';' '\n' <<< "${raw}")
 
-  echo "${archs}"
+  echo "${selected_arch}"
 }
 
 install_flash_attn() {
@@ -307,7 +291,9 @@ install_flash_attn() {
     echo "Set TRELLIS_FLASH_ATTN_CUDA_ARCHS to override this GPU arch selection."
     flash_attn_env+=("FLASH_ATTN_CUDA_ARCHS=${flash_attn_archs}")
   else
-    echo "Could not auto-select flash-attn CUDA arch list; flash-attn will use its package defaults."
+    echo "Could not select one flash-attn CUDA arch target." >&2
+    echo "Choose a GPU target manually in the Manager so flash-attn does not compile its broad package default arch list." >&2
+    exit 1
   fi
 
   "$(trellis_pip)" install packaging psutil ninja
