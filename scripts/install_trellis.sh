@@ -179,6 +179,56 @@ print("TRELLIS.2 GGUF runtime imports available.")
 PY
 }
 
+install_flash_attn() {
+  local flash_attn_jobs="${TRELLIS_FLASH_ATTN_MAX_JOBS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_MAX_JOBS:-}}"
+  local flash_attn_nvcc_threads="${TRELLIS_FLASH_ATTN_NVCC_THREADS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_NVCC_THREADS:-}}"
+  local -a flash_attn_env=()
+
+  if "$(trellis_python)" -c 'import flash_attn' >/dev/null 2>&1; then
+    echo "flash-attn already available."
+    return 0
+  fi
+
+  echo "Installing required flash-attn for TRELLIS.2 using the official pip path."
+  echo "flash-attn install command: pip install flash-attn --no-build-isolation"
+
+  "$(trellis_pip)" install packaging psutil ninja
+  if ! "$(trellis_python)" - <<'PY' >/dev/null 2>&1
+import subprocess
+import sys
+
+completed = subprocess.run(["ninja", "--version"])
+sys.exit(completed.returncode)
+PY
+  then
+    echo "ninja is installed but did not run cleanly. Reinstalling ninja before flash-attn."
+    "$(trellis_pip)" uninstall -y ninja || true
+    "$(trellis_pip)" install ninja
+  fi
+
+  if [[ -n "${flash_attn_jobs}" ]]; then
+    if [[ ! "${flash_attn_jobs}" =~ ^[0-9]+$ || "${flash_attn_jobs}" -lt 1 ]]; then
+      echo "Invalid TRELLIS_FLASH_ATTN_MAX_JOBS value: ${flash_attn_jobs}" >&2
+      exit 1
+    fi
+    echo "Limiting flash-attn build parallelism with MAX_JOBS=${flash_attn_jobs}."
+    flash_attn_env+=("MAX_JOBS=${flash_attn_jobs}")
+  else
+    echo "No MAX_JOBS cap set; letting flash-attn/ninja choose normal build parallelism."
+  fi
+
+  if [[ -n "${flash_attn_nvcc_threads}" ]]; then
+    if [[ ! "${flash_attn_nvcc_threads}" =~ ^[0-9]+$ || "${flash_attn_nvcc_threads}" -lt 1 ]]; then
+      echo "Invalid TRELLIS_FLASH_ATTN_NVCC_THREADS value: ${flash_attn_nvcc_threads}" >&2
+      exit 1
+    fi
+    echo "Using NVCC_THREADS=${flash_attn_nvcc_threads} for flash-attn."
+    flash_attn_env+=("NVCC_THREADS=${flash_attn_nvcc_threads}")
+  fi
+
+  env "${flash_attn_env[@]}" "$(trellis_pip)" install --no-build-isolation flash-attn
+}
+
 ensure_system_dependencies
 
 if [[ ! -d "${CUDA_HOME:-}" ]]; then
@@ -248,15 +298,7 @@ elif command -v nvidia-smi >/dev/null 2>&1; then
   fi
 fi
 
-if ! "$(trellis_python)" -c 'import flash_attn' >/dev/null 2>&1; then
-  echo "Installing required flash-attn for TRELLIS.2"
-  MAX_JOBS="${TRELLIS_FLASH_ATTN_MAX_JOBS:-1}" \
-  CMAKE_BUILD_PARALLEL_LEVEL="${TRELLIS_FLASH_ATTN_MAX_JOBS:-1}" \
-  MAKEFLAGS="-j${TRELLIS_FLASH_ATTN_MAX_JOBS:-1}" \
-  NINJAFLAGS="-j${TRELLIS_FLASH_ATTN_MAX_JOBS:-1}" \
-  NVCC_THREADS="${TRELLIS_FLASH_ATTN_NVCC_THREADS:-1}" \
-  "$(trellis_pip)" install --no-build-isolation flash-attn
-fi
+install_flash_attn
 
 echo "Building TRELLIS native runtime extensions"
 "$(trellis_pip)" install --no-build-isolation \
