@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -17,7 +17,17 @@
     "ref": "main"
   },
   "overview": {
-    "body": "TRELLIS.2 installs a local GGUF 3D generation backend. Install may compile flash-attn from source with the official pip command. The FlashAttention max jobs option sets TRELLIS_FLASH_ATTN_MAX_JOBS, which becomes MAX_JOBS for that flash-attn build only. It does not change model download size, runtime quality, or GPU settings. Lower values use less RAM and take longer. MAX_JOBS=4 is the recommended default for 32GB RAM.",
+    "body": "TRELLIS.2 is Microsoft's open-source 4B image-to-3D model for generating high-fidelity PBR textured 3D assets from images. It uses an O-Voxel representation to handle complex shapes, sharp features, and rich surface materials. This Nymph module installs a local GGUF backend for TRELLIS.2.\n\nFlashAttention install guide:\nInstall may compile flash-attn from source with the official pip command. GPU sets TRELLIS_FLASH_ATTN_CUDA_ARCHS, which becomes FLASH_ATTN_CUDA_ARCHS for that flash-attn build only. Auto-detect reads the NVIDIA compute capability and narrows the build when possible; manual values are useful if auto-detect is wrong or unavailable. Max jobs sets MAX_JOBS, while NVCC threads sets NVCC_THREADS inside each compiler job. These options do not change model download size, runtime quality, or normal runtime GPU settings. For 32GB RAM, use Max jobs 4 and NVCC threads 1 unless you want a more aggressive build. Hugging Face token entry appears during Model Fetch after install, because model downloads use the token and FlashAttention install does not.",
+    "links": [
+      {
+        "label": "Official TRELLIS.2 repo",
+        "url": "https://github.com/microsoft/TRELLIS.2"
+      },
+      {
+        "label": "Official TRELLIS.2 project page",
+        "url": "https://microsoft.github.io/TRELLIS.2/"
+      }
+    ],
     "requirements": [
       "Python 3.10 in the managed NymphsCore WSL distro",
       "CUDA-capable NVIDIA GPU",
@@ -25,6 +35,7 @@
     ]
   },
   "install": {
+    "title": "FLASH ATTENTION OPTIONS",
     "root": "$HOME/TRELLIS.2",
     "entrypoint": "scripts/install_trellis.sh",
     "version_marker": "$HOME/TRELLIS.2/.nymph-module-version",
@@ -33,9 +44,48 @@
     ],
     "fields": [
       {
+        "name": "flash_attn_cuda_archs",
+        "type": "select",
+        "label": "GPU",
+        "env": "TRELLIS_FLASH_ATTN_CUDA_ARCHS",
+        "default": "auto",
+        "options": [
+          {
+            "label": "Auto-detect",
+            "value": "auto",
+            "description": "Read the NVIDIA compute capability and select the flash-attn target arch"
+          },
+          {
+            "label": "SM80",
+            "value": "80",
+            "description": "Ampere-class flash-attn target, such as A100 or RTX 30-series"
+          },
+          {
+            "label": "SM90",
+            "value": "90",
+            "description": "Hopper-class flash-attn target, such as H100 or H800"
+          },
+          {
+            "label": "SM100",
+            "value": "100",
+            "description": "Blackwell-class flash-attn target"
+          },
+          {
+            "label": "SM110",
+            "value": "110",
+            "description": "Thor-class flash-attn target when supported by the CUDA toolkit"
+          },
+          {
+            "label": "SM120",
+            "value": "120",
+            "description": "Newer Blackwell-class flash-attn target when supported by the CUDA toolkit"
+          }
+        ]
+      },
+      {
         "name": "flash_attn_jobs",
         "type": "select",
-        "label": "FlashAttention max jobs",
+        "label": "Max jobs",
         "env": "TRELLIS_FLASH_ATTN_MAX_JOBS",
         "default": "4",
         "options": [
@@ -53,6 +103,30 @@
             "label": "MAX_JOBS=8",
             "value": "8",
             "description": "More CPU and RAM use during the flash-attn source build"
+          }
+        ]
+      },
+      {
+        "name": "flash_attn_nvcc_threads",
+        "type": "select",
+        "label": "NVCC threads",
+        "env": "TRELLIS_FLASH_ATTN_NVCC_THREADS",
+        "default": "1",
+        "options": [
+          {
+            "label": "NVCC_THREADS=1",
+            "value": "1",
+            "description": "Safest compiler thread setting for lower RAM pressure"
+          },
+          {
+            "label": "NVCC_THREADS=2",
+            "value": "2",
+            "description": "Moderate compiler threading if the machine has RAM headroom"
+          },
+          {
+            "label": "NVCC_THREADS=4",
+            "value": "4",
+            "description": "Aggressive compiler threading; can multiply memory pressure with Max jobs"
           }
         ]
       }

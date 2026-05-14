@@ -179,9 +179,105 @@ print("TRELLIS.2 GGUF runtime imports available.")
 PY
 }
 
+map_flash_attn_cuda_arch() {
+  local compute_cap="$1"
+  local major="${compute_cap%%.*}"
+
+  case "${major}" in
+    8)
+      echo "80"
+      ;;
+    9)
+      echo "90"
+      ;;
+    10|11)
+      echo "100"
+      ;;
+    12)
+      echo "120"
+      ;;
+  esac
+}
+
+resolve_flash_attn_cuda_archs() {
+  local detected_caps=""
+  local compute_cap=""
+  local arch=""
+  local archs=""
+
+  if ! command -v nvidia-smi >/dev/null 2>&1; then
+    return 0
+  fi
+
+  detected_caps="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null || true)"
+  while IFS= read -r compute_cap; do
+    compute_cap="$(tr -d '[:space:]' <<< "${compute_cap}")"
+    if [[ ! "${compute_cap}" =~ ^[0-9]+\.[0-9]+$ ]]; then
+      continue
+    fi
+
+    arch="$(map_flash_attn_cuda_arch "${compute_cap}")"
+    if [[ -z "${arch}" ]]; then
+      continue
+    fi
+
+    case ";${archs};" in
+      *";${arch};"*)
+        ;;
+      *)
+        if [[ -z "${archs}" ]]; then
+          archs="${arch}"
+        else
+          archs="${archs};${arch}"
+        fi
+        ;;
+    esac
+  done <<< "${detected_caps}"
+
+  echo "${archs}"
+}
+
+normalize_flash_attn_cuda_archs() {
+  local raw="$1"
+  local arch=""
+  local archs=""
+
+  raw="$(tr ', ' ';;' <<< "${raw}")"
+  while IFS= read -r arch; do
+    arch="$(tr -d '[:space:]' <<< "${arch}")"
+    [[ -z "${arch}" ]] && continue
+
+    case "${arch}" in
+      80|90|100|110|120)
+        ;;
+      *)
+        echo "Invalid TRELLIS_FLASH_ATTN_CUDA_ARCHS value: ${arch}" >&2
+        echo "Use auto or one of: 80, 90, 100, 110, 120. Separate multiple values with semicolons." >&2
+        return 1
+        ;;
+    esac
+
+    case ";${archs};" in
+      *";${arch};"*)
+        ;;
+      *)
+        if [[ -z "${archs}" ]]; then
+          archs="${arch}"
+        else
+          archs="${archs};${arch}"
+        fi
+        ;;
+    esac
+  done < <(tr ';' '\n' <<< "${raw}")
+
+  echo "${archs}"
+}
+
 install_flash_attn() {
   local flash_attn_jobs="${TRELLIS_FLASH_ATTN_MAX_JOBS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_MAX_JOBS:-4}}"
-  local flash_attn_nvcc_threads="${TRELLIS_FLASH_ATTN_NVCC_THREADS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_NVCC_THREADS:-}}"
+  local flash_attn_nvcc_threads="${TRELLIS_FLASH_ATTN_NVCC_THREADS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_NVCC_THREADS:-1}}"
+  local requested_flash_attn_archs="${TRELLIS_FLASH_ATTN_CUDA_ARCHS:-${NYMPHS3D_TRELLIS_FLASH_ATTN_CUDA_ARCHS:-${FLASH_ATTN_CUDA_ARCHS:-}}}"
+  local flash_attn_archs=""
   local -a flash_attn_env=()
 
   if "$(trellis_python)" -c 'import flash_attn' >/dev/null 2>&1; then
@@ -191,6 +287,25 @@ install_flash_attn() {
 
   echo "Installing required flash-attn for TRELLIS.2 using the official pip path."
   echo "flash-attn install command: pip install flash-attn --no-build-isolation"
+
+  if [[ -n "${requested_flash_attn_archs}" &&
+        "${requested_flash_attn_archs,,}" != "auto" ]]; then
+    flash_attn_archs="$(normalize_flash_attn_cuda_archs "${requested_flash_attn_archs}")"
+  fi
+  if [[ -z "${flash_attn_archs}" ]]; then
+    flash_attn_archs="$(resolve_flash_attn_cuda_archs)"
+  fi
+  if [[ -n "${flash_attn_archs}" ]]; then
+    if [[ -n "${requested_flash_attn_archs}" && "${requested_flash_attn_archs,,}" != "auto" ]]; then
+      echo "Using explicit flash-attn CUDA arch list: ${flash_attn_archs}"
+    else
+      echo "Auto-selected flash-attn CUDA arch list: ${flash_attn_archs}"
+    fi
+    echo "Set TRELLIS_FLASH_ATTN_CUDA_ARCHS to override this GPU arch selection."
+    flash_attn_env+=("FLASH_ATTN_CUDA_ARCHS=${flash_attn_archs}")
+  else
+    echo "Could not auto-select flash-attn CUDA arch list; flash-attn will use its package defaults."
+  fi
 
   "$(trellis_pip)" install packaging psutil ninja
   if ! "$(trellis_python)" - <<'PY' >/dev/null 2>&1
@@ -213,6 +328,9 @@ PY
   echo "Limiting flash-attn build parallelism with MAX_JOBS=${flash_attn_jobs}."
   echo "Set TRELLIS_FLASH_ATTN_MAX_JOBS to override this cap."
   flash_attn_env+=("MAX_JOBS=${flash_attn_jobs}")
+  flash_attn_env+=("CMAKE_BUILD_PARALLEL_LEVEL=${flash_attn_jobs}")
+  flash_attn_env+=("MAKEFLAGS=-j${flash_attn_jobs}")
+  flash_attn_env+=("NINJAFLAGS=-j${flash_attn_jobs}")
 
   if [[ -n "${flash_attn_nvcc_threads}" ]]; then
     if [[ ! "${flash_attn_nvcc_threads}" =~ ^[0-9]+$ || "${flash_attn_nvcc_threads}" -lt 1 ]]; then
