@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -22,6 +22,32 @@
     "version_marker": "$HOME/TRELLIS.2/.nymph-module-version",
     "installed_markers": [
       "$HOME/TRELLIS.2/.nymph-module-version"
+    ],
+    "fields": [
+      {
+        "name": "flash_attn_jobs",
+        "type": "select",
+        "label": "Build speed",
+        "env": "TRELLIS_FLASH_ATTN_MAX_JOBS",
+        "default": "4",
+        "options": [
+          {
+            "label": "Safe",
+            "value": "2",
+            "description": "Lower memory use, slower flash-attn compile"
+          },
+          {
+            "label": "Balanced",
+            "value": "4",
+            "description": "Recommended for 32GB RAM"
+          },
+          {
+            "label": "Fast",
+            "value": "8",
+            "description": "More CPU and RAM use during compile"
+          }
+        ]
+      }
     ]
   },
   "runtime": {
