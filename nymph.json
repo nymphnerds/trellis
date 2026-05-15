@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -170,7 +170,9 @@
     "logs": "scripts/trellis_logs.sh",
     "fetch_models": "scripts/trellis_fetch_models.sh",
     "smoke_test": "scripts/trellis_smoke_test.sh",
-    "uninstall": "scripts/trellis_uninstall.sh"
+    "uninstall": "scripts/trellis_uninstall.sh",
+    "open_weights": "scripts/trellis_open_weights.sh",
+    "open_outputs": "scripts/trellis_open_outputs.sh"
   },
   "ui": {
     "sort_order": 40,
@@ -254,6 +256,24 @@
         "result": "show_output"
       },
       {
+        "id": "fetch_models",
+        "label": "Fetch Models",
+        "entrypoint": "fetch_models",
+        "result": "show_output"
+      },
+      {
+        "id": "open_weights",
+        "label": "Open Weights",
+        "entrypoint": "open_weights",
+        "result": "open_directory"
+      },
+      {
+        "id": "open_outputs",
+        "label": "Open Outputs",
+        "entrypoint": "open_outputs",
+        "result": "open_directory"
+      },
+      {
         "id": "start",
         "label": "Start",
         "entrypoint": "start",
@@ -315,7 +335,12 @@
       "support_repo": "microsoft/TRELLIS.2-4B",
       "rembg_u2net": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx",
       "default_quant": "Q5_K_M",
-      "valid_quants": ["Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0"],
+      "valid_quants": [
+        "Q4_K_M",
+        "Q5_K_M",
+        "Q6_K",
+        "Q8_0"
+      ],
       "all_quant_pull": "scripts/trellis_fetch_models.sh --quant all"
     }
   },
