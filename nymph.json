@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -163,6 +163,7 @@
   },
   "entrypoints": {
     "install": "scripts/install_trellis.sh",
+    "update": "scripts/trellis_update.sh",
     "status": "scripts/trellis_status.sh",
     "start": "scripts/trellis_start.sh",
     "stop": "scripts/trellis_stop.sh",
