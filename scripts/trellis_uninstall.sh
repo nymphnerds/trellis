@@ -5,21 +5,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_trellis_common.sh"
 
 PURGE=0
+DATA_ONLY=0
 DRY_RUN=0
 YES=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --purge) PURGE=1; shift ;;
+    --data-only) DATA_ONLY=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --yes) YES=1; shift ;;
     -h|--help)
       cat <<'EOF'
-Usage: trellis_uninstall.sh [--dry-run] [--yes] [--purge]
+Usage: trellis_uninstall.sh [--dry-run] [--yes] [--purge] [--data-only]
 
 Default uninstall removes the TRELLIS runtime install but preserves outputs and logs.
 --purge removes the whole install root. Shared NymphsData outputs, logs, model
 cache, and config are preserved.
+--data-only deletes TRELLIS outputs, logs, config, rembg model data, and legacy
+install-root data while keeping the runtime.
 EOF
       exit 0
       ;;
@@ -30,9 +34,24 @@ EOF
   esac
 done
 
+if [[ "${PURGE}" -eq 1 && "${DATA_ONLY}" -eq 1 ]]; then
+  echo "Choose only one of --purge or --data-only." >&2
+  exit 2
+fi
+
 echo "TRELLIS.2 uninstall plan"
 echo "install_root=${TRELLIS_INSTALL_ROOT}"
-if [[ "${PURGE}" -eq 1 ]]; then
+if [[ "${DATA_ONLY}" -eq 1 ]]; then
+  echo "mode=data-only"
+  echo "delete=${TRELLIS_OUTPUT_DIR}"
+  echo "delete=${TRELLIS_LOG_DIR}"
+  echo "delete=${TRELLIS_CONFIG_DIR}"
+  echo "delete=${U2NET_HOME}"
+  echo "delete=${TRELLIS_INSTALL_ROOT}/outputs"
+  echo "delete=${TRELLIS_INSTALL_ROOT}/logs"
+  echo "preserve=${TRELLIS_INSTALL_ROOT}"
+  echo "preserve=${NYMPHS3D_HF_CACHE_DIR}"
+elif [[ "${PURGE}" -eq 1 ]]; then
   echo "mode=purge"
   echo "delete=${TRELLIS_INSTALL_ROOT}"
 else
@@ -59,11 +78,21 @@ fi
 "${SCRIPT_DIR}/trellis_stop.sh" || true
 
 if [[ ! -d "${TRELLIS_INSTALL_ROOT}" ]]; then
-  echo "TRELLIS.2 is already uninstalled."
-  exit 0
+  if [[ "${DATA_ONLY}" -ne 1 ]]; then
+    echo "TRELLIS.2 is already uninstalled."
+    exit 0
+  fi
 fi
 
-if [[ "${PURGE}" -eq 1 ]]; then
+if [[ "${DATA_ONLY}" -eq 1 ]]; then
+  rm -rf \
+    "${TRELLIS_OUTPUT_DIR}" \
+    "${TRELLIS_LOG_DIR}" \
+    "${TRELLIS_CONFIG_DIR}" \
+    "${U2NET_HOME}" \
+    "${TRELLIS_INSTALL_ROOT}/outputs" \
+    "${TRELLIS_INSTALL_ROOT}/logs"
+elif [[ "${PURGE}" -eq 1 ]]; then
   rm -rf "${TRELLIS_INSTALL_ROOT}"
 else
   rm -f "${TRELLIS_INSTALL_ROOT}/.nymph-module-version"
@@ -72,4 +101,8 @@ else
     -exec rm -rf {} +
 fi
 
-echo "TRELLIS.2 uninstalled."
+if [[ "${DATA_ONLY}" -eq 1 ]]; then
+  echo "TRELLIS.2 data deleted."
+else
+  echo "TRELLIS.2 uninstalled."
+fi

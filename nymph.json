@@ -3,7 +3,7 @@
   "id": "trellis",
   "name": "TRELLIS.2",
   "short_name": "TR",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Local TRELLIS.2 GGUF 3D generation backend packaged as an installable Nymph module.",
   "category": "3d",
   "packaging": "repo",
@@ -300,6 +300,7 @@
     "dry_run_arg": "--dry-run",
     "confirm_arg": "--yes",
     "purge_arg": "--purge",
+    "data_only_arg": "--data-only",
     "preserve_by_default": [
       "outputs",
       "logs",

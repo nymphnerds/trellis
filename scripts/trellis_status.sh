@@ -27,6 +27,8 @@ if [[ -f "${marker}" ]]; then
 fi
 
 if [[ -d "${TRELLIS_OUTPUT_DIR}" && -n "$(find "${TRELLIS_OUTPUT_DIR}" -mindepth 1 -print -quit 2>/dev/null)" ]] ||
+   [[ -d "${TRELLIS_CONFIG_DIR}" && -n "$(find "${TRELLIS_CONFIG_DIR}" -mindepth 1 -print -quit 2>/dev/null)" ]] ||
+   [[ -d "${U2NET_HOME}" && -n "$(find "${U2NET_HOME}" -mindepth 1 -print -quit 2>/dev/null)" ]] ||
    [[ -d "${TRELLIS_INSTALL_ROOT}/outputs" && -n "$(find "${TRELLIS_INSTALL_ROOT}/outputs" -mindepth 1 -print -quit 2>/dev/null)" ]] ||
    [[ -d "${TRELLIS_LOG_DIR}" && -n "$(find "${TRELLIS_LOG_DIR}" -mindepth 1 -print -quit 2>/dev/null)" ]] ||
    [[ -d "${TRELLIS_INSTALL_ROOT}/logs" && -n "$(find "${TRELLIS_INSTALL_ROOT}/logs" -mindepth 1 -print -quit 2>/dev/null)" ]]; then
