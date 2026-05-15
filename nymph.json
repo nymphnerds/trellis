@@ -296,6 +296,7 @@
   },
   "uninstall": {
     "supports_purge": true,
+    "supports_data_delete": true,
     "requires_confirmation": true,
     "dry_run_arg": "--dry-run",
     "confirm_arg": "--yes",
