@@ -114,7 +114,9 @@ elif [[ "${installed}" == "true" && "${adapter_ready}" != "true" ]]; then
   state=needs_attention
   health=degraded
   detail="TRELLIS runtime files are installed, but the GGUF adapter scripts are missing."
-elif [[ "${installed}" == "true" && ( "${health}" == "degraded" || "${health}" == "model-download-needed" ) ]]; then
+elif [[ "${installed}" == "true" && "${health}" == "model-download-needed" ]]; then
+  state=model_download_needed
+elif [[ "${installed}" == "true" && "${health}" == "degraded" ]]; then
   state=needs_attention
 elif [[ "${installed}" == "true" ]]; then
   state=installed
